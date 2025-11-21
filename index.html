@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASCII Art</title>
+
+    <style>
+        /* ASCII 아트가 줄바꿈 그대로 보이도록 설정 글자 크기/줄 간격을 줄여서 픽셀 느낌을 만드는 스타일 */
+        #out {
+            font-size: 6px;
+            line-height: 6px;
+            white-space: pre; /* 공백, 줄바꿈 그대로 출력 */
+        }
+    </style>
+</head>
+
+<!-- <body style="margin: 0; font-family: 'consolas'; line-height: 85%; letter-spacing: 2px; font-size: 10px;" > -->
+<body>
+
+    <!-- 이미지를 읽어서 drawImage로 캔버스에 그린 뒤
+    getImageData()로 픽셀을 하나씩 읽는 구조 -->
+    
+    <canvas id="canvas"></canvas>
+    <pre id="out"></pre> <!-- 여기에 최종 ASCII 아트 출력 -->
+
+    <script>
+
+        let img = new Image();
+        img.src = "reze.png";   // 브라우저 보안 때문에 Live Server에서 실행
+
+        let canvas = document.getElementById("canvas");
+        let ctx = canvas.getContext("2d");
+
+        const ascii = "@$#!~+-⠀";  // ASCII 문자 단계. 밝은 → 어두운 순서
+        
+        img.onload = function () {
+
+            // 캔버스 크기를 원본 이미지 크기로 설정
+            let w = img.width;
+            let h = img.height;
+
+            canvas.width = w;
+            canvas.height = h;
+
+            // 이미지를 캔버스에 그리기
+            ctx.drawImage(img, 0, 0, w, h);
+
+            let result = "";
+
+            // ASCII 해상도 조절 stepX/Y가 클수록 해상도 낮아지고 ASCII가 더 크게 보임
+            let stepX = 3; // 가로 픽셀 간격
+            let stepY = 6; // 세로 픽셀 간격
+
+            // 이미지 픽셀을 일정 간격으로 샘플링하며 ASCII 문자로 변환
+            for (let y = 0; y < h; y += stepY) {
+                for (let x = 0; x < w; x += stepX) {
+
+                    // 개별 픽셀 데이터 읽기 (r,g,b,a)
+                    let pixel = ctx.getImageData(x, y, 1, 1).data;
+
+                    let r = pixel[0];
+                    let g = pixel[1];
+                    let b = pixel[2];
+
+                    // 밝기 계산 (사람 눈 기준 계수 적용)
+                    let gray = 0.299 * r + 0.587 * g + 0.114 * b;
+
+                    // gray(0~255)를 0~ascii.length-1 인덱스로 변환
+                    let index = Math.floor((gray / 255) * (ascii.length - 1));
+
+                    // 해당하는 ASCII 문자 추가
+                    result += ascii[index];
+                }
+
+                // 한 줄 끝나면 줄바꿈
+                result += "\n";
+            }
+
+            // 최종 ASCII 결과 화면에 출력
+            document.getElementById("out").innerText = result;
+        };
+    </script>
+
+</body>
+
+</html>
